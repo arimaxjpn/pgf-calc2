@@ -41,7 +41,7 @@
     margin: 0;
   }
   input:focus { outline: none; }
-  input::placeholder { color: #6b6b6b; font-weight: normal; }
+  input::placeholder { color: #9a9a9a; font-weight: normal; }
   /* Remove number input spinners globally */
   input[type=number]::-webkit-inner-spin-button,
   input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
@@ -86,7 +86,7 @@
 
   /* --- Input Group (Result + Input + Diff) --- */
   /* 目標値（計算で出した狙いの読値）。答えではないので控えめに */
-  .res-line { line-height: 1.3; display: block; min-height: 22px; font-size: 13px; padding: 2px 0; color: #6b6b6b; font-weight: normal; }
+  .res-line { line-height: 1.3; display: block; min-height: 22px; font-size: 13px; padding: 2px 0; color: #8a8a8a; font-weight: normal; }
   .inp-group { position: relative; width: 100%; margin: 2px 0; }
   .inp-sm { height: 34px; font-size: 16px !important; padding-right: 28px; }
   .btn-clear {
@@ -162,7 +162,7 @@
     border-radius: 6px;
     text-align: left;
     font-size: 11px;
-    color: #6b6b6b;
+    color: #8a8a8a;
     line-height: 1.8;
   }
   .formula span { color: #9a9a9a; }
@@ -192,7 +192,7 @@
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
   }
-  .corr-inp::placeholder { color: #6b6b6b; font-weight: normal; }
+  .corr-inp::placeholder { color: #9a9a9a; font-weight: normal; }
   .corr-inp:focus { outline: none; }
   .btn-corr-action {
     position: absolute; right: 0; top: 0; height: 50px; width: 44px;
@@ -213,7 +213,7 @@
   .sc-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
   .sc-row:last-child { margin-bottom: 0; }
   .sc-label { width: 44px; min-width: 44px; font-size: 11px; color: #9a9a9a; line-height: 1.3; text-align: center; }
-  .sc-sub { color: #6b6b6b; }
+  .sc-sub { color: #8a8a8a; }
   .sc-inp {
     flex: 1; min-width: 0; height: 40px;
     font-size: 16px !important; font-weight: bold; text-align: center;
@@ -221,12 +221,12 @@
     border: 1px solid #4a4a4a; border-radius: 6px;
     padding: 0; -webkit-appearance: none; margin: 0;
   }
-  .sc-inp::placeholder { color: #6b6b6b; font-weight: normal; }
+  .sc-inp::placeholder { color: #9a9a9a; font-weight: normal; }
   .sc-inp:focus { outline: none; }
   .sc-result {
     flex: 1; min-width: 0; height: 40px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: bold; color: #6b6b6b;
+    font-size: 14px; font-weight: bold; color: #8a8a8a;
     background: #222; border: 1px solid #333; border-radius: 6px;
   }
   .sc-apply, .sc-close {
@@ -381,7 +381,7 @@ function generateGrid() {
           </div>
           <div style="display:flex;width:100%;justify-content:space-between;align-items:center;height:26px;">
             <span id="out_rb_${idx}" class="res-line">-</span>
-            <span id="diff_rb_${idx}" class="diff-line" style="color:#6b6b6b">-</span>
+            <span id="diff_rb_${idx}" class="diff-line" style="color:#8a8a8a">-</span>
           </div>
         </div>`;
     }
@@ -397,7 +397,7 @@ function generateGrid() {
           </div>
           <div style="display:flex;width:100%;justify-content:space-between;align-items:center;height:26px;">
             <span id="out_rb_${idx}" class="res-line">-</span>
-            <span id="diff_rb_${idx}" class="diff-line" style="color:#6b6b6b">-</span>
+            <span id="diff_rb_${idx}" class="diff-line" style="color:#8a8a8a">-</span>
           </div>
         </div>`;
     }
@@ -414,7 +414,7 @@ function generateGrid() {
           </div>
           <div style="display:flex;width:100%;justify-content:space-between;align-items:center;height:26px;">
             <span id="out_rf_${idx}" class="res-line">-</span>
-            <span id="diff_rf_${idx}" class="diff-line" style="color:#6b6b6b">-</span>
+            <span id="diff_rf_${idx}" class="diff-line" style="color:#8a8a8a">-</span>
           </div>
         </div>`;
     }
@@ -430,7 +430,7 @@ function generateGrid() {
           </div>
           <div style="display:flex;width:100%;justify-content:space-between;align-items:center;height:26px;">
             <span id="out_rf_${idx}" class="res-line">-</span>
-            <span id="diff_rf_${idx}" class="diff-line" style="color:#6b6b6b">-</span>
+            <span id="diff_rf_${idx}" class="diff-line" style="color:#8a8a8a">-</span>
           </div>
         </div>`;
     }
@@ -506,7 +506,7 @@ function runCalc() {
       chkDiff('rb', i);
     } else {
       elOutRb.innerText = '-';
-      const dRb = document.getElementById(`diff_rb_${i}`); dRb.innerText = '-'; dRb.style.color = '#6b6b6b';
+      const dRb = document.getElementById(`diff_rb_${i}`); dRb.innerText = '-'; dRb.style.color = '#8a8a8a';
     }
 
     // --- Front Row ---
@@ -518,7 +518,7 @@ function runCalc() {
       chkDiff('rf', i);
     } else {
       elOutRf.innerText = '-';
-      const dRf = document.getElementById(`diff_rf_${i}`); dRf.innerText = '-'; dRf.style.color = '#6b6b6b';
+      const dRf = document.getElementById(`diff_rf_${i}`); dRf.innerText = '-'; dRf.style.color = '#8a8a8a';
     }
   }
 
@@ -545,7 +545,7 @@ function chkDiff(type, idx) {
 
   if(target === undefined || inpEl.value === '') {
     outEl.innerText = '-';
-    outEl.style.color = '#6b6b6b';
+    outEl.style.color = '#8a8a8a';
     return;
   }
 
@@ -922,7 +922,7 @@ function onSlopeCalcInput() {
   const s = calcSlopeFromReadings();
   if (s === null) {
     out.innerText = '読値A・読値B・測距を入れる';
-    out.style.color = '#6b6b6b';
+    out.style.color = '#8a8a8a';
     apply.disabled = true;
     return;
   }
