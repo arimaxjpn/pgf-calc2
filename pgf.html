@@ -494,6 +494,8 @@ function runCalc() {
   }
 
   drawSlope();
+  // 勾配計算パネルの表示はグリッドの距離に依存する。距離が変われば追随させる
+  onSlopeCalcInput();
 }
 
 function chkDiff(type, idx) {
@@ -842,7 +844,10 @@ function toggleSlopeCalc() {
   const open = panel.style.display === 'none';
   panel.style.display = open ? 'block' : 'none';
   btn.className = open ? 'btn btn-sc-on' : 'btn btn-sc';
-  if (open) document.getElementById('sc_a').focus();
+  if (open) {
+    onSlopeCalcInput(); // 閉じている間に距離が変わっている可能性があるため 開いた時に最新化
+    document.getElementById('sc_a').focus();
+  }
 }
 
 function onSlopeCalcInput() {
