@@ -596,8 +596,12 @@ function drawSlope() {
   svgEl.setAttribute('width', W);
   svgEl.setAttribute('height', H);
 
-  // Fixed equal spacing regardless of distance values
-  const step = usableW / SPANS; // 100px per span
+  // スパンは実距離に関わらず等間隔で描く（伸び縮みさせない）。
+  // 図の点を上の入力欄の中心に揃えることを優先しているため。
+  // よってこの図は路面の縮尺図ではなく、どのスパンがどれだけ傾いているかの目安である。
+  // 例外長のスパン（例 2.5m）があると図の形と実際の路面の形は一致しないが、
+  // これは既知かつ意図した割り切り（2026-08-18 ダイ裁定）。
+  const step = usableW / SPANS; // = COL_W
 
   // Build points array
   let pts = [];
