@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pgf-calc2-v10';
+const CACHE_NAME = 'pgf-calc2-v11';
 const ASSETS = [
   './pgf.html',
   './manifest.json'

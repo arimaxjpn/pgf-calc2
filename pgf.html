@@ -452,11 +452,15 @@ function getSpanSlopes() {
   return out;
 }
 
-// スパン i の距離(m)。未入力は SPAN_LEN_M
+// スパン i の距離(m)。未入力は SPAN_LEN_M。
+// 0以下や数値でない値は null＝「距離が決まらない」として扱う。
+// 長さ0や負の製品は存在せず、それを含む累積は物理的に意味を持たないため。
 function spanLen(i) {
   const el = document.getElementById(`in_dist_${i}`);
-  const v = (el && el.value.trim() !== '') ? parseFloat(el.value) : SPAN_LEN_M;
-  return Number.isFinite(v) ? v : SPAN_LEN_M;
+  const raw = el ? el.value.trim() : '';
+  if (raw === '') return SPAN_LEN_M;
+  const v = parseFloat(raw);
+  return (Number.isFinite(v) && v > 0) ? v : null;
 }
 
 // 勾配が入っている先頭からの連続区間の終端。ここまでが目標値を出せる範囲
@@ -484,8 +488,9 @@ function runCalc() {
   let cumDrop = 0;
   let known = true; // 勾配が途切れたら、それ以降は目標値を出せない
   for(let i=1; i<=SPANS; i++) {
-    if (spanSlopes[i-1] === null) known = false;
-    if (known) cumDrop += spanLen(i) * 1000 * (spanSlopes[i-1] / 100);
+    const dist = spanLen(i);
+    if (spanSlopes[i-1] === null || dist === null) known = false; // 勾配か距離が決まらなければ以降は出せない
+    if (known) cumDrop += dist * 1000 * (spanSlopes[i-1] / 100);
 
     // Formula: 目標値 = 基準値(奥or手前) - 累積drop + PGF高
     const drop = cumDrop;
@@ -858,7 +863,9 @@ function measuredRange() {
   if (d === null || start === 0) return null;
   let cum = 0;
   for (let i = start; i <= SPANS; i++) {
-    cum += spanLen(i);
+    const len = spanLen(i);
+    if (len === null) return { start, end: i, exact: false }; // 距離が不正なら範囲を成立させない
+    cum += len;
     if (Math.abs(cum - d) < 0.001) return { start, end: i, exact: true };
     if (cum > d) return { start, end: i, exact: false };
   }
