@@ -244,9 +244,17 @@
   .sc-apply { background: #1565C0; color: #fff; }
   .sc-apply:disabled { background: #333; color: #666; }
   .sc-close { background: #444; color: #ccc; }
-  /* 勾配計算の測距が指す範囲の印。黄＝収まっている／赤＝最後の半端な1本 */
-  .int-slope-inp.mark-ok  { background: rgba(255, 214, 0, 0.20); }
-  .int-slope-inp.mark-bad { background: rgba(244, 67, 54, 0.28); }
+  /* 勾配計算の測距が指す範囲の印。黄＝収まっている／赤＝最後の半端な1本。
+     入力欄が親の背景を覆うため、印は入力欄そのものに掛ける。
+     枠線ではなく inset の影を使うのは、大きさが変わらず配置を崩さないため。 */
+  .int-slope-inp.mark-ok  input { background: #3a3520; box-shadow: inset 0 2px 0 #FFD600, inset 0 -2px 0 #FFD600; }
+  .int-slope-inp.mark-bad input { background: #3a2320; box-shadow: inset 0 2px 0 #f44336, inset 0 -2px 0 #f44336; }
+  .int-slope-inp.mark-ok.mark-l input        { box-shadow: inset 0 2px 0 #FFD600, inset 0 -2px 0 #FFD600, inset 2px 0 0 #FFD600; }
+  .int-slope-inp.mark-ok.mark-r input        { box-shadow: inset 0 2px 0 #FFD600, inset 0 -2px 0 #FFD600, inset -2px 0 0 #FFD600; }
+  .int-slope-inp.mark-ok.mark-l.mark-r input { box-shadow: inset 0 2px 0 #FFD600, inset 0 -2px 0 #FFD600, inset 2px 0 0 #FFD600, inset -2px 0 0 #FFD600; }
+  .int-slope-inp.mark-bad.mark-l input        { box-shadow: inset 0 2px 0 #f44336, inset 0 -2px 0 #f44336, inset 2px 0 0 #f44336; }
+  .int-slope-inp.mark-bad.mark-r input        { box-shadow: inset 0 2px 0 #f44336, inset 0 -2px 0 #f44336, inset -2px 0 0 #f44336; }
+  .int-slope-inp.mark-bad.mark-l.mark-r input { box-shadow: inset 0 2px 0 #f44336, inset 0 -2px 0 #f44336, inset 2px 0 0 #f44336, inset -2px 0 0 #f44336; }
 </style>
 </head>
 <body>
@@ -861,18 +869,21 @@ function measuredRange() {
 
 // 測距が指す範囲を勾配セルの背景で示す。黄＝収まっている／赤＝最後の半端な1本
 function markMeasuredSpans() {
-  for (let i = 1; i <= SPANS; i++) {
+  const boxOf = i => {
     const el = document.getElementById(`val_slope_${i}`);
-    const box = el ? el.closest('.int-slope-inp') : null;
-    if (box) box.classList.remove('mark-ok', 'mark-bad');
+    return el ? el.closest('.int-slope-inp') : null;
+  };
+  for (let i = 1; i <= SPANS; i++) {
+    boxOf(i)?.classList.remove('mark-ok', 'mark-bad', 'mark-l', 'mark-r');
   }
   const r = measuredRange();
   if (!r) return;
   for (let i = r.start; i <= r.end; i++) {
-    const el = document.getElementById(`val_slope_${i}`);
-    const box = el ? el.closest('.int-slope-inp') : null;
-    if (box) box.classList.add((!r.exact && i === r.end) ? 'mark-bad' : 'mark-ok');
+    boxOf(i)?.classList.add((!r.exact && i === r.end) ? 'mark-bad' : 'mark-ok');
   }
+  // 枠の左右は画面上の並びで決める。観測点変更で列の順序が反転するため
+  boxOf(isReversed ? r.end : r.start)?.classList.add('mark-l');
+  boxOf(isReversed ? r.start : r.end)?.classList.add('mark-r');
 }
 
 // 勾配は3桁で丸める。20mでの誤差は最大0.1mmとなり、目標値の整数丸めに埋もれる
