@@ -15,7 +15,7 @@
   /* --- Reset & Base --- */
   body {
     background-color: #000;
-    color: #fff;
+    color: #e8e8e8;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     margin: 0;
     padding: 15px 10px;
@@ -26,21 +26,22 @@
   *, *:before, *:after { box-sizing: inherit; }
 
   /* --- Inputs --- */
+  /* 入力欄の見た目はここが唯一の出所。個別に色を上書きしない */
   input {
     font-size: 16px !important;
     font-weight: bold;
     text-align: center;
-    background: #fff;
-    color: #000;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    background: #2b2b2b;
+    color: #e8e8e8;
+    border: 1px solid #4a4a4a;
+    border-radius: 6px;
     width: 100%;
     height: 34px;
     -webkit-appearance: none;
     margin: 0;
   }
   input:focus { outline: none; }
-  input::placeholder { color: #bbb; font-weight: normal; }
+  input::placeholder { color: #6b6b6b; font-weight: normal; }
   /* Remove number input spinners globally */
   input[type=number]::-webkit-inner-spin-button,
   input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
@@ -50,7 +51,7 @@
   .row { display: flex; width: 100%; gap: 0; }
   .panel {
     background: #222;
-    border: 1px solid #444;
+    border: 1px solid #333;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -61,18 +62,11 @@
   }
   
   /* --- Colors --- */
-  .bg-accent { background-color: #102A4A !important; border-color: #1E3E66 !important; z-index: 1; }
-  .bg-header { background-color: #1a1a1a !important; border-color: #333 !important; }
-  .txt-green { color: #666; font-weight: bold; }
-  .txt-orange { color: #FF9800; font-weight: bold; }
-  .txt-white { color: #fff; font-weight: bold; }
-  .lbl-sm { font-size: 12px; color: #ccc; margin-bottom: 2px; }
-  .fs-14 { font-size: 14px !important; }
 
   /* --- Main Grid (Scrollable) --- */
   .grid-wrapper {
     position: relative;
-    border: 1px solid #444;
+    border: 1px solid #333;
     border-radius: 10px;
     overflow: hidden; /* Contains the scroll */
     background: #222;
@@ -87,37 +81,34 @@
   }
   /* Grid Items */
   .cell-h { height: 68px; } /* Data row height */
-  .cell-m { height: 50px; } /* Header row height */
 
   /* --- Input Group (Result + Input + Diff) --- */
-  .res-line { line-height: 1.3; display: block; min-height: 22px; font-size: 14px; padding: 2px 0; }
+  /* 目標値（計算で出した狙いの読値）。答えではないので控えめに */
+  .res-line { line-height: 1.3; display: block; min-height: 22px; font-size: 13px; padding: 2px 0; color: #6b6b6b; font-weight: normal; }
   .inp-group { position: relative; width: 100%; margin: 2px 0; }
   .inp-sm { height: 34px; font-size: 16px !important; padding-right: 28px; }
   .btn-clear {
     position: absolute; right: 0; top: 0; height: 34px; width: 28px;
-    background: transparent; border: none; color: #888; font-size: 24px;
+    background: transparent; border: none; color: #9a9a9a; font-size: 24px;
     font-weight: bold; cursor: pointer; display: none; align-items: center; justify-content: center;
     line-height: 34px; padding: 0;
   }
   .btn-clear.show {
     display: flex;
   }
+  /* 差分＝このアプリの答え（高い／低い／OK）。画面で最も強い印はここに乗せる */
   .diff-line {
     display: block; min-height: 22px; white-space: nowrap;
-    font-size: 14px; font-weight: bold; padding: 2px 0;
+    font-size: 15px; font-weight: 800; padding: 2px 0; letter-spacing: 0.02em;
   }
 
   /* --- Slope / Distance inputs: dark theme --- */
+  /* 勾配・距離は道路に沿った一続きの帯として見せる。色は土台のまま、角と境だけ落とす */
   .int-slope-inp input,
   .int-dist-cell input {
-    background: #333;
-    color: #e0e0e0;
-    border-color: #555;
     border-radius: 0;
     border-right: none;
   }
-  .int-slope-inp input::placeholder,
-  .int-dist-cell input::placeholder { color: #777; }
   .int-slope-inp input:focus,
   .int-dist-cell input:focus { outline: none; }
 
@@ -127,8 +118,8 @@
     display: flex;
     flex-direction: column;
     background: #222;
-    border-top: 1px solid #444;
-    border-bottom: 1px solid #444;
+    border-top: 1px solid #333;
+    border-bottom: 1px solid #333;
   }
   .int-top {
     display: flex;
@@ -169,19 +160,19 @@
     border-radius: 6px;
     text-align: left;
     font-size: 11px;
-    color: #777;
+    color: #6b6b6b;
     line-height: 1.8;
   }
-  .formula span { color: #aaa; }
+  .formula span { color: #9a9a9a; }
   .btn {
     border: none; border-radius: 8px;
-    font-weight: bold; font-size: 14px; color: #fff; cursor: pointer;
+    font-weight: bold; font-size: 14px; color: #e8e8e8; cursor: pointer;
   }
-  .btn-reset { background: #444; color: #ccc; }
-  .btn-flip { background: #666; }
-  .btn-corr { background: #444; color: #ccc; }
-  .btn-corr-on  { background: #E65100; color: #fff; }
-  .btn-corr-off { background: #555; color: #aaa; }
+  .btn-reset { background: #3f3f3f; color: #e8e8e8; }
+  .btn-flip { background: #3f3f3f; }
+  .btn-corr { background: #3f3f3f; color: #e8e8e8; }
+  .btn-corr-on  { background: #E65100; color: #e8e8e8; }
+  .btn-corr-off { background: #3f3f3f; color: #9a9a9a; }
   .corr-wrap { position: relative; height: 50px; }
   .corr-wrap .btn { width: 100%; height: 100%; }
   .corr-inp {
@@ -189,8 +180,8 @@
     left: 0; top: 0; right: 0; bottom: 0;
     width: auto; height: 50px;
     font-size: 16px !important; font-weight: bold;
-    text-align: center; background: #333; color: #e0e0e0;
-    border: 1px solid #555; border-radius: 8px;
+    text-align: center; background: #2b2b2b; color: #e8e8e8;
+    border: 1px solid #4a4a4a; border-radius: 8px;
     padding: 0; -webkit-appearance: none; margin: 0;
   }
   .corr-inp.has-action {
@@ -199,41 +190,41 @@
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
   }
-  .corr-inp::placeholder { color: #777; font-weight: normal; }
+  .corr-inp::placeholder { color: #6b6b6b; font-weight: normal; }
   .corr-inp:focus { outline: none; }
   .btn-corr-action {
     position: absolute; right: 0; top: 0; height: 50px; width: 44px;
-    border: 1px solid #555; border-left: none; border-radius: 0 8px 8px 0;
-    font-size: 13px; font-weight: bold; cursor: pointer; color: #fff;
+    border: 1px solid #4a4a4a; border-left: none; border-radius: 0 8px 8px 0;
+    font-size: 13px; font-weight: bold; cursor: pointer; color: #e8e8e8;
   }
 
 
   /* --- Slope Calculator (勾配計算) --- */
   .sc-bar { margin-top: 15px; }
   .sc-bar .btn { width: 100%; height: 44px; }
-  .btn-sc { background: #444; color: #ccc; }
-  .btn-sc-on { background: #1565C0; color: #fff; }
+  .btn-sc { background: #3f3f3f; color: #e8e8e8; }
+  .btn-sc-on { background: #1565C0; color: #e8e8e8; }
   .sc-panel {
     margin-top: 8px; padding: 10px;
     background: #1a1a1a; border: 1px solid #333; border-radius: 8px;
   }
   .sc-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
   .sc-row:last-child { margin-bottom: 0; }
-  .sc-label { width: 44px; min-width: 44px; font-size: 11px; color: #aaa; line-height: 1.3; text-align: center; }
-  .sc-sub { color: #777; }
+  .sc-label { width: 44px; min-width: 44px; font-size: 11px; color: #9a9a9a; line-height: 1.3; text-align: center; }
+  .sc-sub { color: #6b6b6b; }
   .sc-inp {
     flex: 1; min-width: 0; height: 40px;
     font-size: 16px !important; font-weight: bold; text-align: center;
-    background: #333; color: #e0e0e0;
-    border: 1px solid #555; border-radius: 6px;
+    background: #2b2b2b; color: #e8e8e8;
+    border: 1px solid #4a4a4a; border-radius: 6px;
     padding: 0; -webkit-appearance: none; margin: 0;
   }
-  .sc-inp::placeholder { color: #777; font-weight: normal; }
+  .sc-inp::placeholder { color: #6b6b6b; font-weight: normal; }
   .sc-inp:focus { outline: none; }
   .sc-result {
     flex: 1; min-width: 0; height: 40px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: bold; color: #888;
+    font-size: 14px; font-weight: bold; color: #6b6b6b;
     background: #222; border: 1px solid #333; border-radius: 6px;
   }
   .sc-apply, .sc-close {
@@ -241,9 +232,9 @@
     border: none; border-radius: 6px;
     font-size: 14px; font-weight: bold; cursor: pointer;
   }
-  .sc-apply { background: #1565C0; color: #fff; }
-  .sc-apply:disabled { background: #333; color: #666; }
-  .sc-close { background: #444; color: #ccc; }
+  .sc-apply { background: #1565C0; color: #e8e8e8; }
+  .sc-apply:disabled { background: #2b2b2b; color: #6b6b6b; }
+  .sc-close { background: #3f3f3f; color: #e8e8e8; }
   /* 勾配計算の測距が指す範囲の印。黄＝収まっている／赤＝最後の半端な1本。
      入力欄が親の背景を覆うため、印は入力欄そのものに掛ける。
      枠線ではなく inset の影を使うのは、大きさが変わらず配置を崩さないため。 */
@@ -359,8 +350,8 @@ function generateGrid() {
     </div>`;
   }
   // 50px label spacer: centered on reference dot, label text identifies the row
-  const slopeSpacer = `<div style="width:50px;min-width:50px;height:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;"><span style="font-size:10px;color:#aaa;line-height:1.3;">勾配<br>(%)</span></div>`;
-  const distSpacer  = `<div style="width:50px;min-width:50px;height:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;"><span style="font-size:10px;color:#aaa;line-height:1.3;">距離<br>(m)</span></div>`;
+  const slopeSpacer = `<div style="width:50px;min-width:50px;height:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;"><span style="font-size:10px;color:#9a9a9a;line-height:1.3;">勾配<br>(%)</span></div>`;
+  const distSpacer  = `<div style="width:50px;min-width:50px;height:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;"><span style="font-size:10px;color:#9a9a9a;line-height:1.3;">距離<br>(m)</span></div>`;
 
   html += `<div class="int-cell">
     <div class="int-top">${slopeSpacer}${slopeCellsHtml}</div>
@@ -387,8 +378,8 @@ function generateGrid() {
             <button class="btn-clear" onclick="clearInp('in_rb_${idx}')">×</button>
           </div>
           <div style="display:flex;width:100%;justify-content:space-between;align-items:center;height:26px;">
-            <span id="out_rb_${idx}" class="res-line txt-green">-</span>
-            <span id="diff_rb_${idx}" class="diff-line" style="color:#888">-</span>
+            <span id="out_rb_${idx}" class="res-line">-</span>
+            <span id="diff_rb_${idx}" class="diff-line" style="color:#6b6b6b">-</span>
           </div>
         </div>`;
     }
@@ -403,8 +394,8 @@ function generateGrid() {
             <button class="btn-clear" onclick="clearInp('in_rb_${idx}')">×</button>
           </div>
           <div style="display:flex;width:100%;justify-content:space-between;align-items:center;height:26px;">
-            <span id="out_rb_${idx}" class="res-line txt-green">-</span>
-            <span id="diff_rb_${idx}" class="diff-line" style="color:#888">-</span>
+            <span id="out_rb_${idx}" class="res-line">-</span>
+            <span id="diff_rb_${idx}" class="diff-line" style="color:#6b6b6b">-</span>
           </div>
         </div>`;
     }
@@ -420,8 +411,8 @@ function generateGrid() {
             <button class="btn-clear" onclick="clearInp('in_rf_${idx}')">×</button>
           </div>
           <div style="display:flex;width:100%;justify-content:space-between;align-items:center;height:26px;">
-            <span id="out_rf_${idx}" class="res-line txt-green">-</span>
-            <span id="diff_rf_${idx}" class="diff-line" style="color:#888">-</span>
+            <span id="out_rf_${idx}" class="res-line">-</span>
+            <span id="diff_rf_${idx}" class="diff-line" style="color:#6b6b6b">-</span>
           </div>
         </div>`;
     }
@@ -436,8 +427,8 @@ function generateGrid() {
             <button class="btn-clear" onclick="clearInp('in_rf_${idx}')">×</button>
           </div>
           <div style="display:flex;width:100%;justify-content:space-between;align-items:center;height:26px;">
-            <span id="out_rf_${idx}" class="res-line txt-green">-</span>
-            <span id="diff_rf_${idx}" class="diff-line" style="color:#888">-</span>
+            <span id="out_rf_${idx}" class="res-line">-</span>
+            <span id="diff_rf_${idx}" class="diff-line" style="color:#6b6b6b">-</span>
           </div>
         </div>`;
     }
@@ -508,7 +499,7 @@ function runCalc() {
       chkDiff('rb', i);
     } else {
       elOutRb.innerText = '-';
-      const dRb = document.getElementById(`diff_rb_${i}`); dRb.innerText = '-'; dRb.style.color = '#888';
+      const dRb = document.getElementById(`diff_rb_${i}`); dRb.innerText = '-'; dRb.style.color = '#6b6b6b';
     }
 
     // --- Front Row ---
@@ -520,7 +511,7 @@ function runCalc() {
       chkDiff('rf', i);
     } else {
       elOutRf.innerText = '-';
-      const dRf = document.getElementById(`diff_rf_${i}`); dRf.innerText = '-'; dRf.style.color = '#888';
+      const dRf = document.getElementById(`diff_rf_${i}`); dRf.innerText = '-'; dRf.style.color = '#6b6b6b';
     }
   }
 
@@ -547,7 +538,7 @@ function chkDiff(type, idx) {
 
   if(target === undefined || inpEl.value === '') {
     outEl.innerText = '-';
-    outEl.style.color = '#888';
+    outEl.style.color = '#6b6b6b';
     return;
   }
 
@@ -637,19 +628,19 @@ function drawSlope() {
     const x1 = xPos[i], x2 = xPos[i + 1];
 
     // Tick marks
-    svg += `<line x1="${x1.toFixed(1)}" y1="${tickTop}" x2="${x1.toFixed(1)}" y2="${tickBot}" stroke="#e0e0e0" stroke-width="0.5"/>`;
+    svg += `<line x1="${x1.toFixed(1)}" y1="${tickTop}" x2="${x1.toFixed(1)}" y2="${tickBot}" stroke="#9a9a9a" stroke-width="0.5"/>`;
     if (i === xPos.length - 2) {
-      svg += `<line x1="${x2.toFixed(1)}" y1="${tickTop}" x2="${x2.toFixed(1)}" y2="${tickBot}" stroke="#e0e0e0" stroke-width="0.5"/>`;
+      svg += `<line x1="${x2.toFixed(1)}" y1="${tickTop}" x2="${x2.toFixed(1)}" y2="${tickBot}" stroke="#9a9a9a" stroke-width="0.5"/>`;
     }
 
     // Dimension baseline
     if (x2 - x1 > aw * 2) {
-      svg += `<line x1="${(x1 + aw).toFixed(1)}" y1="${arrowY}" x2="${(x2 - aw).toFixed(1)}" y2="${arrowY}" stroke="#e0e0e0" stroke-width="0.5"/>`;
+      svg += `<line x1="${(x1 + aw).toFixed(1)}" y1="${arrowY}" x2="${(x2 - aw).toFixed(1)}" y2="${arrowY}" stroke="#9a9a9a" stroke-width="0.5"/>`;
     }
 
     // Arrowheads (inward-pointing)
-    svg += `<polygon points="${x1},${arrowY} ${x1+aw},${arrowY-ah} ${x1+aw},${arrowY+ah}" fill="#aaa"/>`;
-    svg += `<polygon points="${x2},${arrowY} ${x2-aw},${arrowY-ah} ${x2-aw},${arrowY+ah}" fill="#aaa"/>`;
+    svg += `<polygon points="${x1},${arrowY} ${x1+aw},${arrowY-ah} ${x1+aw},${arrowY+ah}" fill="#9a9a9a"/>`;
+    svg += `<polygon points="${x2},${arrowY} ${x2-aw},${arrowY-ah} ${x2-aw},${arrowY+ah}" fill="#9a9a9a"/>`;
   }
 
   // Horizontal reference line (dashed)
@@ -667,9 +658,9 @@ function drawSlope() {
   // Dots
   for (const p of pts) {
     if (p.isRef) {
-      svg += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="5" fill="#f44336" stroke="#111" stroke-width="0.5"/>`;
+      svg += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="5" fill="#f44336" stroke="#000" stroke-width="0.5"/>`;
     } else {
-      svg += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="#FFD600" stroke="#111" stroke-width="0.5"/>`;
+      svg += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="#FFD600" stroke="#000" stroke-width="0.5"/>`;
     }
   }
 
@@ -918,14 +909,14 @@ function onSlopeCalcInput() {
   const s = calcSlopeFromReadings();
   if (s === null) {
     out.innerText = '読値A・読値B・測距を入れる';
-    out.style.color = '#888';
+    out.style.color = '#6b6b6b';
     apply.disabled = true;
     return;
   }
   const r = measuredRange();
   if (r === null) {
     out.innerText = '入れる場所がありません（読値リセット）';
-    out.style.color = '#FF9800';
+    out.style.color = '#f44336';
     apply.disabled = true;
   } else if (r.exact) {
     out.innerText = `勾配 ${fmtSlope(s)} %　（スパン${r.start}〜${r.end}）`;
@@ -933,7 +924,7 @@ function onSlopeCalcInput() {
     apply.disabled = false;
   } else {
     out.innerText = `勾配 ${fmtSlope(s)} %　（切れ目に不一致）`;
-    out.style.color = '#FF9800';
+    out.style.color = '#f44336';
     apply.disabled = true;
   }
 }
