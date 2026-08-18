@@ -212,6 +212,43 @@
     font-size: 13px; font-weight: bold; cursor: pointer; color: #fff;
   }
 
+
+  /* --- Slope Calculator (勾配計算) --- */
+  .sc-bar { margin-top: 15px; }
+  .sc-bar .btn { width: 100%; height: 44px; }
+  .btn-sc { background: #444; color: #ccc; }
+  .btn-sc-on { background: #1565C0; color: #fff; }
+  .sc-panel {
+    margin-top: 8px; padding: 10px;
+    background: #1a1a1a; border: 1px solid #333; border-radius: 8px;
+  }
+  .sc-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .sc-row:last-child { margin-bottom: 0; }
+  .sc-label { width: 44px; min-width: 44px; font-size: 11px; color: #aaa; line-height: 1.3; text-align: center; }
+  .sc-sub { color: #777; }
+  .sc-inp {
+    flex: 1; min-width: 0; height: 40px;
+    font-size: 16px !important; font-weight: bold; text-align: center;
+    background: #333; color: #e0e0e0;
+    border: 1px solid #555; border-radius: 6px;
+    padding: 0; -webkit-appearance: none; margin: 0;
+  }
+  .sc-inp::placeholder { color: #777; font-weight: normal; }
+  .sc-inp:focus { outline: none; }
+  .sc-result {
+    flex: 1; min-width: 0; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: bold; color: #888;
+    background: #222; border: 1px solid #333; border-radius: 6px;
+  }
+  .sc-apply, .sc-close {
+    flex: 1; min-width: 0; height: 40px;
+    border: none; border-radius: 6px;
+    font-size: 14px; font-weight: bold; cursor: pointer;
+  }
+  .sc-apply { background: #1565C0; color: #fff; }
+  .sc-apply:disabled { background: #333; color: #666; }
+  .sc-close { background: #444; color: #ccc; }
 </style>
 </head>
 <body>
@@ -221,6 +258,26 @@
       </div>
   </div>
 
+  <div class="sc-bar">
+    <button id="sc-btn" class="btn btn-sc" onclick="toggleSlopeCalc()">勾配計算</button>
+  </div>
+  <div id="sc-panel" class="sc-panel" style="display:none">
+    <div class="sc-row">
+      <span class="sc-label">読値A<br><span class="sc-sub">手前</span></span>
+      <input type="text" inputmode="decimal" id="sc_a" class="sc-inp" placeholder="mm" oninput="onSlopeCalcInput()" onkeydown="chkEnt(event)">
+      <span class="sc-label">読値B<br><span class="sc-sub">先</span></span>
+      <input type="text" inputmode="decimal" id="sc_b" class="sc-inp" placeholder="mm" oninput="onSlopeCalcInput()" onkeydown="chkEnt(event)">
+    </div>
+    <div class="sc-row">
+      <span class="sc-label">距離<br><span class="sc-sub">(m)</span></span>
+      <input type="text" inputmode="decimal" id="sc_d" class="sc-inp" placeholder="m" oninput="onSlopeCalcInput()" onkeydown="chkEnt(event)">
+      <span class="sc-result" id="sc_out">勾配 —</span>
+    </div>
+    <div class="sc-row">
+      <button class="sc-apply" id="sc_apply" onclick="applySlopeCalc()" disabled>適用</button>
+      <button class="sc-close" onclick="toggleSlopeCalc()">閉じる</button>
+    </div>
+  </div>
   <div class="footer">
     <div class="corr-wrap">
       <button id="corr-btn" class="btn btn-corr" onclick="showCorrInput()">補正値</button>
@@ -722,6 +779,51 @@ function toggleCorr() {
     actionBtn.className = 'btn-corr-action btn-corr-on';
   }
   runCalc();
+}
+
+// --- 勾配計算：レベルの読値2点と距離から勾配(%)を出す ---
+// 既存の目標値計算  目標値 = 基準読値 − 距離(m) × 1000 × (勾配% ÷ 100)  の逆関数。
+// 逆関数として定義しているので符号を人が決めず、取り違えが起こらない。
+function calcSlopeFromReadings() {
+  const a = parseFloat(document.getElementById('sc_a').value);
+  const b = parseFloat(document.getElementById('sc_b').value);
+  const d = parseFloat(document.getElementById('sc_d').value);
+  if (isNaN(a) || isNaN(b) || isNaN(d) || d === 0) return null;
+  return (a - b) / (d * 1000) * 100;
+}
+
+function toggleSlopeCalc() {
+  const panel = document.getElementById('sc-panel');
+  const btn = document.getElementById('sc-btn');
+  const open = panel.style.display === 'none';
+  panel.style.display = open ? 'block' : 'none';
+  btn.className = open ? 'btn btn-sc-on' : 'btn btn-sc';
+  if (open) document.getElementById('sc_a').focus();
+}
+
+function onSlopeCalcInput() {
+  const s = calcSlopeFromReadings();
+  const out = document.getElementById('sc_out');
+  const apply = document.getElementById('sc_apply');
+  if (s === null) {
+    out.innerText = '勾配 —';
+    out.style.color = '#888';
+    apply.disabled = true;
+    return;
+  }
+  out.innerText = '勾配 ' + s.toFixed(2) + ' %';
+  out.style.color = '#FFD600';
+  apply.disabled = false;
+}
+
+function applySlopeCalc() {
+  const s = calcSlopeFromReadings();
+  if (s === null) return;
+  const el = document.getElementById('val_slope_1');
+  if (!el) return;
+  el.value = s.toFixed(2);
+  onSlopeInput(1); // 既存処理を再利用（×ボタン表示・placeholder更新・再計算）
+  toggleSlopeCalc();
 }
 
 function doFlip() {
