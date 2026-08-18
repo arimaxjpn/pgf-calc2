@@ -764,31 +764,38 @@ function showCorrInput() {
   inp.focus();
 }
 
+// 補正値を未入力の状態（「補正値」ボタン表示）へ戻す。
+// 「入力してから消した」場合と「一度も入れずに離れた」場合の両方から呼ぶ。
+function hideCorrInput() {
+  const inp = document.getElementById('val_corr');
+  corrOn = false;
+  document.getElementById('corr-action-btn').style.display = 'none';
+  inp.classList.remove('has-action');
+  inp.value = '';
+  inp.style.display = 'none';
+  document.getElementById('corr-btn').style.display = '';
+}
+
 function onCorrInput() {
   const inp = document.getElementById('val_corr');
-  const actionBtn = document.getElementById('corr-action-btn');
   if (inp.value.trim() === '') {
-    // 全削除 → ボタン状態に戻す
-    corrOn = false;
-    actionBtn.style.display = 'none';
-    inp.classList.remove('has-action');
-    inp.style.display = 'none';
-    document.getElementById('corr-btn').style.display = '';
+    hideCorrInput();
     runCalc();
     return;
   }
-  // 値あり → アクションボタン表示
   _showCorrAction();
   runCalc();
 }
 
 function onCorrBlur() {
-  // oninput が発火しなかった場合のフォールバック
+  // oninput が発火しなかった場合のフォールバック（iOS Safari）
   const inp = document.getElementById('val_corr');
-  if (inp.value.trim() !== '') {
-    _showCorrAction();
-    runCalc();
+  if (inp.value.trim() === '') {
+    hideCorrInput(); // 一度も入れずに離れたときも「補正値」ボタンへ戻す
+    return;
   }
+  _showCorrAction();
+  runCalc();
 }
 
 function _showCorrAction() {
