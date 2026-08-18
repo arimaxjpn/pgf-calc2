@@ -79,17 +79,12 @@
   }
   .scroll-container {
     display: grid;
-    /* All columns: 100px each */
-    grid-template-columns: 100px repeat(4, 100px);
+    /* 列の指定は generateGrid() が SPANS と COL_W から設定する（二重管理を避けるため） */
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
     max-width: 100%;
   }
-  .grid-wrapper.reversed .scroll-container {
-    grid-template-columns: repeat(4, 100px) 100px;
-  }
-
   /* Grid Items */
   .cell-h { height: 68px; } /* Data row height */
   .cell-m { height: 50px; } /* Header row height */
@@ -249,14 +244,12 @@
   .sc-apply { background: #1565C0; color: #fff; }
   .sc-apply:disabled { background: #333; color: #666; }
   .sc-close { background: #444; color: #ccc; }
+  /* 勾配計算の測距が指す範囲の印。黄＝収まっている／赤＝最後の半端な1本 */
+  .int-slope-inp.mark-ok  { background: rgba(255, 214, 0, 0.20); }
+  .int-slope-inp.mark-bad { background: rgba(244, 67, 54, 0.28); }
 </style>
 </head>
 <body>
-
-  <div class="grid-wrapper">
-    <div class="scroll-container" id="mainGrid">
-      </div>
-  </div>
 
   <div class="sc-bar">
     <button id="sc-btn" class="btn btn-sc" onclick="toggleSlopeCalc()">勾配計算</button>
@@ -280,6 +273,12 @@
       <button class="sc-close" onclick="toggleSlopeCalc()">閉じる</button>
     </div>
   </div>
+
+  <div class="grid-wrapper">
+    <div class="scroll-container" id="mainGrid">
+      </div>
+  </div>
+
   <div class="footer">
     <div class="corr-wrap">
       <button id="corr-btn" class="btn btn-corr" onclick="showCorrInput()">補正値</button>
@@ -300,7 +299,8 @@
 /* --- Logic --- */
 
 // Configuration
-const SPANS = 4; // Number of spans to generate
+const SPANS = 6; // スパン数（PGF製品の本数）
+const COL_W = 100; // 1列の幅(px)。グリッドの列幅・SVG幅・点の間隔すべての出所
 // PGF製品1本の標準長(m)。現場に例外があればスパンごとの距離欄で手動変更する（既存の運用）
 const SPAN_LEN_M = 5;
 let isReversed = false; // Observation point direction: false = 上り側から, true = 下り側から
@@ -327,6 +327,12 @@ function generateGrid() {
     wrapper.classList.remove('reversed');
   }
   
+  // 列指定は SPANS と COL_W から作る。基準点1列＋スパンSPANS列
+  const colSpec = isReversed
+    ? `repeat(${SPANS}, ${COL_W}px) ${COL_W}px`
+    : `${COL_W}px repeat(${SPANS}, ${COL_W}px)`;
+  grid.style.gridTemplateColumns = colSpec;
+
   let html = '';
   
   // Determine column order based on observation direction
@@ -339,7 +345,7 @@ function generateGrid() {
     const idx = spanOrder[k];
     slopeCellsHtml += `<div class="int-slope-inp">
       <div class="inp-group">
-        <input type="number" id="val_slope_${idx}" class="inp-sm" placeholder="0" step="0.1" oninput="onSlopeInput(${idx})" onkeydown="chkEnt(event)">
+        <input type="number" id="val_slope_${idx}" class="inp-sm" placeholder="−" step="0.1" oninput="onSlopeInput(${idx})" onkeydown="chkEnt(event)">
         <button class="btn-clear" onclick="clearSlope(${idx})">×</button>
       </div>
     </div>`;
@@ -360,7 +366,7 @@ function generateGrid() {
       </div>`;
   }
   html += `</div>
-    <svg id="slope-svg" width="500" height="90" style="display:block"></svg>
+    <svg id="slope-svg" width="${(SPANS + 1) * COL_W}" height="90" style="display:block"></svg>
     </div>`;
 
   // 2. Back Row (奥) - readings
@@ -433,15 +439,32 @@ function generateGrid() {
 }
 
 // Cascade: slope entered at span i applies to i and all subsequent spans (1→4 order)
-function getEffectiveSlopes() {
-  const slopes = [];
-  let last = 0;
+// 各スパンの勾配(%)。未入力は null を返す。
+// 引き継ぎ（カスケード）はしない——測っていない区間に目標値を出さないため。
+// 0% は「水平」という有効な値なので、未入力と 0 は区別する必要がある。
+function getSpanSlopes() {
+  const out = [];
   for (let i = 1; i <= SPANS; i++) {
     const el = document.getElementById(`val_slope_${i}`);
-    if (el && el.value !== '') last = parseFloat(el.value);
-    slopes.push(last);
+    const raw = el ? el.value.trim() : '';
+    const v = raw === '' ? null : parseFloat(raw);
+    out.push(Number.isFinite(v) ? v : null);
   }
-  return slopes; // slopes[0]=span1, slopes[1]=span2, ...
+  return out;
+}
+
+// スパン i の距離(m)。未入力は SPAN_LEN_M
+function spanLen(i) {
+  const el = document.getElementById(`in_dist_${i}`);
+  const v = (el && el.value.trim() !== '') ? parseFloat(el.value) : SPAN_LEN_M;
+  return Number.isFinite(v) ? v : SPAN_LEN_M;
+}
+
+// 勾配が入っている先頭からの連続区間の終端。ここまでが目標値を出せる範囲
+function firstEmptySlopeSpan() {
+  const sl = getSpanSlopes();
+  for (let i = 1; i <= SPANS; i++) if (sl[i - 1] === null) return i;
+  return 0; // 全部埋まっている
 }
 
 // Main Calculation
@@ -450,7 +473,7 @@ let memTargets = {}; // Store calculated targets
 function runCalc() {
   const corrEl = document.getElementById('val_corr');
   const h = (corrOn && corrEl && corrEl.value !== '') ? parseFloat(corrEl.value) : 0;
-  const effectiveSlopes = getEffectiveSlopes();
+  const spanSlopes = getSpanSlopes();
 
   // Get Readings (NaN if empty)
   const rb = document.getElementById('val_rb').value === '' ? NaN : parseFloat(document.getElementById('val_rb').value);
@@ -460,17 +483,17 @@ function runCalc() {
   memTargets = {}; // Reset memory
 
   let cumDrop = 0;
+  let known = true; // 勾配が途切れたら、それ以降は目標値を出せない
   for(let i=1; i<=SPANS; i++) {
-    const dEl = document.getElementById(`in_dist_${i}`);
-    const dVal = dEl ? (dEl.value === '' ? SPAN_LEN_M : parseFloat(dEl.value)) : SPAN_LEN_M;
-    cumDrop += dVal * 1000 * (effectiveSlopes[i-1] / 100);
+    if (spanSlopes[i-1] === null) known = false;
+    if (known) cumDrop += spanLen(i) * 1000 * (spanSlopes[i-1] / 100);
 
     // Formula: 目標値 = 基準値(奥or手前) - 累積drop + PGF高
     const drop = cumDrop;
 
     // --- Back Row ---
     const elOutRb = document.getElementById(`out_rb_${i}`);
-    if(!isNaN(rb)) {
+    if(known && !isNaN(rb)) {
       const val = Math.round(rb - drop + h);
       memTargets[`rb_${i}`] = val;
       elOutRb.innerText = val;
@@ -482,7 +505,7 @@ function runCalc() {
 
     // --- Front Row ---
     const elOutRf = document.getElementById(`out_rf_${i}`);
-    if(!isNaN(rf)) {
+    if(known && !isNaN(rf)) {
       const val = Math.round(rf - drop + h);
       memTargets[`rf_${i}`] = val;
       elOutRf.innerText = val;
@@ -558,14 +581,15 @@ function drawSlope() {
   const svgEl = document.getElementById('slope-svg');
   if (!svgEl) return;
 
-  const effectiveSlopes = getEffectiveSlopes();
+  const spanSlopes = getSpanSlopes();
 
-  const W = 500, H = 90;
-  const pad = 50;
-  const usableW = W - 2 * pad; // 400px
+  const W = (SPANS + 1) * COL_W, H = 90;
+  const pad = COL_W / 2; // 各列の中心に点を置く
+  const usableW = W - 2 * pad; // = SPANS * COL_W
   const tickTop = 8, tickBot = 22, arrowY = 15;
   const centerY = 58;
 
+  svgEl.setAttribute('width', W);
   svgEl.setAttribute('height', H);
 
   // Fixed equal spacing regardless of distance values
@@ -577,13 +601,15 @@ function drawSlope() {
   if (!isReversed) {
     pts.push({ x: pad, y: centerY, isRef: true });
     for (let i = 0; i < SPANS; i++) {
-      cumYDrop += step * (effectiveSlopes[i] / 100);
+      if (spanSlopes[i] === null) break; // 勾配が入っていない先は描かない
+      cumYDrop += step * (spanSlopes[i] / 100);
       pts.push({ x: pad + step * (i + 1), y: centerY - cumYDrop, isRef: false });
     }
   } else {
     pts.push({ x: W - pad, y: centerY, isRef: true });
     for (let i = 0; i < SPANS; i++) {
-      cumYDrop += step * (effectiveSlopes[i] / 100);
+      if (spanSlopes[i] === null) break; // 勾配が入っていない先は描かない
+      cumYDrop += step * (spanSlopes[i] / 100);
       pts.push({ x: W - pad - step * (i + 1), y: centerY - cumYDrop, isRef: false });
     }
   }
@@ -642,16 +668,12 @@ function drawSlope() {
   svgEl.innerHTML = svg;
 }
 
+// 引き継ぎを廃止したので「=」は使わない。0% は「水平」という有効な値なので、
+// 未入力を 0 と誤解させないよう placeholder は「−」にする。
 function updateSlopePlaceholders() {
-  let hasValue = false;
   for (let i = 1; i <= SPANS; i++) {
     const el = document.getElementById(`val_slope_${i}`);
-    if (!el) continue;
-    if (el.value !== '') {
-      hasValue = true;
-    } else {
-      el.placeholder = hasValue ? '=' : '0';
-    }
+    if (el) el.placeholder = '−';
   }
 }
 
@@ -797,9 +819,11 @@ function toggleCorr() {
 // 式は既存の目標値計算  目標値 = 基準読値 − 距離(m) × 1000 × (勾配% ÷ 100)  の逆関数。
 // 逆関数として定義しているので符号を人が決めず、取り違えが起こらない。
 //
-// 測距がスパンの切れ目に一致するかを spanAtDistance() で照合して表示する。
-// 一致していれば「そのスパンの目標値＝測った読値B」となり、現場で答え合わせができる。
-// 一致しないのは誤りではないが、例外区間の距離欄をまだ直していない可能性が高い。
+// measuredRange() が「空いている先頭のスパンから、測距が届く範囲」を返す。
+// 勾配はその範囲にだけ入れる。引き継ぎはしないので、その先は空欄＝目標値も出ない。
+// 次に測って適用すると、空いている先頭（＝今回の続き）から入る。
+// 測距が切れ目に一致しない場合は適用させない。どのスパンまでが測れたのか決まらないため。
+// その状態は勾配セルの背景（最後の1本が赤）で示す＝距離欄の設定と噛み合っていない印。
 
 // 正の数だけを受け付ける。parseFloat は '1200abc' を 1200、'1.2.3' を 1.2 として通すため使えない
 function scNum(id) {
@@ -819,18 +843,36 @@ function calcSlopeFromReadings() {
   return (a - b) / (d * 1000) * 100;
 }
 
-// 測距が何本目のスパンの切れ目に当たるかを返す。当たらなければ 0。
-// 画面のスパン距離（未入力なら SPAN_LEN_M）の累積で判定するので、例外区間も反映される。
-function spanAtDistance(d) {
+// 勾配計算の適用先を決める。空いている先頭のスパンから、測距が届く範囲を返す。
+//   { start, end, exact }   exact=false は測距がスパンの切れ目に一致していない
+// 判定には画面のスパン距離（未入力なら SPAN_LEN_M）を使うので、例外区間も反映される。
+function measuredRange() {
+  const d = scNum('sc_d');
+  const start = firstEmptySlopeSpan();
+  if (d === null || start === 0) return null;
   let cum = 0;
-  for (let i = 1; i <= SPANS; i++) {
-    const el = document.getElementById(`in_dist_${i}`);
-    const v = (el && el.value !== '') ? parseFloat(el.value) : SPAN_LEN_M;
-    if (!isFinite(v)) return 0;
-    cum += v;
-    if (Math.abs(cum - d) < 0.001) return i;
+  for (let i = start; i <= SPANS; i++) {
+    cum += spanLen(i);
+    if (Math.abs(cum - d) < 0.001) return { start, end: i, exact: true };
+    if (cum > d) return { start, end: i, exact: false };
   }
-  return 0;
+  return { start, end: SPANS, exact: false }; // 測距が残りのスパンより長い
+}
+
+// 測距が指す範囲を勾配セルの背景で示す。黄＝収まっている／赤＝最後の半端な1本
+function markMeasuredSpans() {
+  for (let i = 1; i <= SPANS; i++) {
+    const el = document.getElementById(`val_slope_${i}`);
+    const box = el ? el.closest('.int-slope-inp') : null;
+    if (box) box.classList.remove('mark-ok', 'mark-bad');
+  }
+  const r = measuredRange();
+  if (!r) return;
+  for (let i = r.start; i <= r.end; i++) {
+    const el = document.getElementById(`val_slope_${i}`);
+    const box = el ? el.closest('.int-slope-inp') : null;
+    if (box) box.classList.add((!r.exact && i === r.end) ? 'mark-bad' : 'mark-ok');
+  }
 }
 
 // 勾配は3桁で丸める。20mでの誤差は最大0.1mmとなり、目標値の整数丸めに埋もれる
@@ -851,35 +893,50 @@ function toggleSlopeCalc() {
 }
 
 function onSlopeCalcInput() {
-  const s = calcSlopeFromReadings();
   const out = document.getElementById('sc_out');
   const apply = document.getElementById('sc_apply');
   if (!out || !apply) return;
+  markMeasuredSpans();
+  const s = calcSlopeFromReadings();
   if (s === null) {
     out.innerText = '読値A・読値B・測距を入れる';
     out.style.color = '#888';
     apply.disabled = true;
     return;
   }
-  const n = spanAtDistance(scNum('sc_d'));
-  if (n) {
-    out.innerText = `勾配 ${fmtSlope(s)} %　（スパン${n}の位置）`;
+  const r = measuredRange();
+  if (r === null) {
+    out.innerText = '入れる場所がありません（読値リセット）';
+    out.style.color = '#FF9800';
+    apply.disabled = true;
+  } else if (r.exact) {
+    out.innerText = `勾配 ${fmtSlope(s)} %　（スパン${r.start}〜${r.end}）`;
     out.style.color = '#FFD600';
+    apply.disabled = false;
   } else {
     out.innerText = `勾配 ${fmtSlope(s)} %　（切れ目に不一致）`;
     out.style.color = '#FF9800';
+    apply.disabled = true;
   }
-  apply.disabled = false;
 }
 
+// 測った区間にだけ勾配を入れる。引き継ぎはしないので、この先は空欄のまま＝目標値も出ない。
+// 次に測って適用すると、空いている先頭（＝今回の続き）から入る。
 function applySlopeCalc() {
   const s = calcSlopeFromReadings();
-  if (s === null) return;
-  // スパンの距離欄には触らない。例外区間を手動で直した値を上書きしないため
-  const el = document.getElementById('val_slope_1');
-  if (!el) return;
-  el.value = fmtSlope(s);
-  onSlopeInput(1); // 既存処理を再利用（×ボタン表示・placeholder更新・再計算）
+  const r = measuredRange();
+  if (s === null || r === null || !r.exact) return;
+  const v = fmtSlope(s);
+  for (let i = r.start; i <= r.end; i++) {
+    const el = document.getElementById(`val_slope_${i}`);
+    if (!el) continue;
+    el.value = v;
+    const clearBtn = el.parentElement?.querySelector('.btn-clear');
+    if (clearBtn) clearBtn.classList.add('show');
+  }
+  updateSlopePlaceholders();
+  runCalc();
+  resetSlopeCalc(); // 使い終わった値は残さない。次は続きから入る
   toggleSlopeCalc();
 }
 
