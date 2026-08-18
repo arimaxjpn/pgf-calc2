@@ -235,10 +235,18 @@
   }
   .sc-inp::placeholder { color: #777; font-weight: normal; }
   .sc-inp:focus { outline: none; }
+  .sc-dist { flex: 1; min-width: 0; display: grid; gap: 6px; }
+  .sc-d {
+    height: 40px; min-width: 0;
+    background: #333; color: #e0e0e0;
+    border: 1px solid #555; border-radius: 6px;
+    font-size: 15px; font-weight: bold; cursor: pointer;
+  }
+  .sc-d.on { background: #1565C0; border-color: #1565C0; color: #fff; }
   .sc-result {
     flex: 1; min-width: 0; height: 40px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 15px; font-weight: bold; color: #888;
+    font-size: 14px; font-weight: bold; color: #888;
     background: #222; border: 1px solid #333; border-radius: 6px;
   }
   .sc-apply, .sc-close {
@@ -269,9 +277,11 @@
       <input type="text" inputmode="decimal" id="sc_b" class="sc-inp" placeholder="mm" oninput="onSlopeCalcInput()" onkeydown="chkEnt(event)">
     </div>
     <div class="sc-row">
-      <span class="sc-label">距離<br><span class="sc-sub">(m)</span></span>
-      <input type="text" inputmode="decimal" id="sc_d" class="sc-inp" placeholder="m" oninput="onSlopeCalcInput()" onkeydown="chkEnt(event)">
-      <span class="sc-result" id="sc_out">勾配 —</span>
+      <span class="sc-label">測距<br><span class="sc-sub">(m)</span></span>
+      <div class="sc-dist" id="sc-dist"></div>
+    </div>
+    <div class="sc-row">
+      <span class="sc-result" id="sc_out">読値A・読値B・測距を入れる</span>
     </div>
     <div class="sc-row">
       <button class="sc-apply" id="sc_apply" onclick="applySlopeCalc()" disabled>適用</button>
@@ -299,12 +309,15 @@
 
 // Configuration
 const SPANS = 4; // Number of spans to generate
+// PGF製品1本の標準長(m)。現場に例外があればスパンごとの距離欄で手動変更する（既存の運用）
+const SPAN_LEN_M = 5;
 let isReversed = false; // Observation point direction: false = 上り側から, true = 下り側から
 let corrOn = false; // Correction ON/OFF state
 
 // Initialize
 window.onload = function() {
   generateGrid();
+  buildSlopeDistButtons();
   runCalc();
 };
 
@@ -350,7 +363,7 @@ function generateGrid() {
   for(let idx of spanOrder) {
     html += `<div class="int-dist-cell">
         <div class="inp-group">
-          <input type="number" id="in_dist_${idx}" class="inp-sm" placeholder="5" oninput="onDistInput(${idx})" onkeydown="chkEnt(event)">
+          <input type="number" id="in_dist_${idx}" class="inp-sm" placeholder="${SPAN_LEN_M}" oninput="onDistInput(${idx})" onkeydown="chkEnt(event)">
           <button class="btn-clear" onclick="clearDist(${idx})">×</button>
         </div>
       </div>`;
@@ -458,7 +471,7 @@ function runCalc() {
   let cumDrop = 0;
   for(let i=1; i<=SPANS; i++) {
     const dEl = document.getElementById(`in_dist_${i}`);
-    const dVal = dEl ? (dEl.value === '' ? 5 : parseFloat(dEl.value)) : 5;
+    const dVal = dEl ? (dEl.value === '' ? SPAN_LEN_M : parseFloat(dEl.value)) : SPAN_LEN_M;
     cumDrop += dVal * 1000 * (effectiveSlopes[i-1] / 100);
 
     // Formula: 目標値 = 基準値(奥or手前) - 累積drop + PGF高
@@ -716,6 +729,7 @@ function doReset() {
     chkDiff('rf', i);
   }
   
+  resetSlopeCalc(); // パネルの表示と実データが食い違わないようにする
   // Recalculate to update distance labels based on settings
   runCalc();
 }
@@ -781,15 +795,59 @@ function toggleCorr() {
   runCalc();
 }
 
-// --- 勾配計算：レベルの読値2点と距離から勾配(%)を出す ---
-// 既存の目標値計算  目標値 = 基準読値 − 距離(m) × 1000 × (勾配% ÷ 100)  の逆関数。
+// --- 勾配計算：レベルの読値2点と測距から勾配(%)を出す ---
+//
+// 用語：スパン＝PGF製品1本分（SPAN_LEN_M）。測距＝現場で任意に決める測定距離。別物である。
+// 測距は SPAN_LEN_M の倍数（＝製品n本分）に限る。自由入力を許すと（例：22m）測距とスパン距離の
+// 合計がずれ、もっともらしい誤った目標値が出る（2026-08-18 コデの点検で判明）。
+// 受け入れ条件：n本分で適用したとき、スパンnの目標値が測った読値Bと一致する（スパン1ではない）。
+//
+// 式は既存の目標値計算  目標値 = 基準読値 − 距離(m) × 1000 × (勾配% ÷ 100)  の逆関数。
 // 逆関数として定義しているので符号を人が決めず、取り違えが起こらない。
+
+let scDist = 0; // 選択中の測距(m)。0 = 未選択
+
+// 測距ボタンは SPANS と SPAN_LEN_M から作る（本数の上限を二箇所に書かないため）
+function buildSlopeDistButtons() {
+  const box = document.getElementById('sc-dist');
+  if (!box) return;
+  box.style.gridTemplateColumns = `repeat(${SPANS}, minmax(0, 1fr))`;
+  let h = '';
+  for (let i = 1; i <= SPANS; i++) {
+    const m = i * SPAN_LEN_M;
+    h += `<button type="button" class="sc-d" data-m="${m}" onclick="pickSlopeDist(${m})">${m}</button>`;
+  }
+  box.innerHTML = h;
+}
+
+// 正の数だけを受け付ける。parseFloat は '1200abc' を 1200、'1.2.3' を 1.2 として通すため使えない
+function scNum(id) {
+  const el = document.getElementById(id);
+  if (!el) return null;
+  const v = el.value.trim();
+  if (!/^\d+(\.\d+)?$/.test(v)) return null;
+  const n = parseFloat(v);
+  return n > 0 ? n : null;
+}
+
 function calcSlopeFromReadings() {
-  const a = parseFloat(document.getElementById('sc_a').value);
-  const b = parseFloat(document.getElementById('sc_b').value);
-  const d = parseFloat(document.getElementById('sc_d').value);
-  if (isNaN(a) || isNaN(b) || isNaN(d) || d === 0) return null;
-  return (a - b) / (d * 1000) * 100;
+  const a = scNum('sc_a');
+  const b = scNum('sc_b');
+  if (a === null || b === null || scDist <= 0) return null;
+  return (a - b) / (scDist * 1000) * 100;
+}
+
+// 勾配は3桁で丸める。20mでの誤差は最大0.1mmとなり、目標値の整数丸めに埋もれる
+function fmtSlope(s) {
+  return String(parseFloat(s.toFixed(3)));
+}
+
+function pickSlopeDist(m) {
+  scDist = (scDist === m) ? 0 : m;
+  document.querySelectorAll('.sc-d').forEach(b => {
+    b.classList.toggle('on', parseFloat(b.dataset.m) === scDist);
+  });
+  onSlopeCalcInput();
 }
 
 function toggleSlopeCalc() {
@@ -805,13 +863,14 @@ function onSlopeCalcInput() {
   const s = calcSlopeFromReadings();
   const out = document.getElementById('sc_out');
   const apply = document.getElementById('sc_apply');
+  if (!out || !apply) return;
   if (s === null) {
-    out.innerText = '勾配 —';
+    out.innerText = '読値A・読値B・測距を入れる';
     out.style.color = '#888';
     apply.disabled = true;
     return;
   }
-  out.innerText = '勾配 ' + s.toFixed(2) + ' %';
+  out.innerText = `勾配 ${fmtSlope(s)} %　（${scDist / SPAN_LEN_M}本分）`;
   out.style.color = '#FFD600';
   apply.disabled = false;
 }
@@ -819,11 +878,25 @@ function onSlopeCalcInput() {
 function applySlopeCalc() {
   const s = calcSlopeFromReadings();
   if (s === null) return;
+  // スパンの距離欄には触らない。例外区間を手動で直した値を上書きしないため。
+  // 測距を SPAN_LEN_M の倍数に限っているので、既定のままなら測距とスパン距離の合計は一致する。
   const el = document.getElementById('val_slope_1');
   if (!el) return;
-  el.value = s.toFixed(2);
+  el.value = fmtSlope(s);
   onSlopeInput(1); // 既存処理を再利用（×ボタン表示・placeholder更新・再計算）
   toggleSlopeCalc();
+}
+
+// 観測点変更・読値リセットの後にパネルを初期化する。
+// 残したままだと、測った向きと適用先が黙ってずれる／実データと表示が食い違う
+function resetSlopeCalc() {
+  ['sc_a', 'sc_b'].forEach(id => {
+    const e = document.getElementById(id);
+    if (e) e.value = '';
+  });
+  scDist = 0;
+  document.querySelectorAll('.sc-d').forEach(b => b.classList.remove('on'));
+  onSlopeCalcInput();
 }
 
 function doFlip() {
@@ -897,6 +970,8 @@ function doFlip() {
   // Recalculate with new layout
   runCalc();
   
+  resetSlopeCalc(); // 向きが変わると測った向きと適用先の意味がずれるため初期化する
+
   // Recalculate differences for all restored reading values
   for(let i=1; i<=SPANS; i++) {
     if (readingValues[`rf_${i}`]) {
